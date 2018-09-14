@@ -23,7 +23,6 @@ public class ChangeTexturePixel : MonoBehaviour
 
     void ChangePixelColorByCircle(int x, int y, int radius, Color col)
     {
-        
         for (int i = -Radius; i < Radius; i++)
         {
             var py = y + i;
@@ -43,9 +42,16 @@ public class ChangeTexturePixel : MonoBehaviour
                 {
                     continue;
                 }
+               
+                if (px==0)
+                {
+                   // px = MyTex.width - 1;
+                   MyTex.SetPixel(MyTex.width-1,py,Col);
+                }
                 MyTex.SetPixel(px, py, Col);
                 //Debug.Log("px:"+px);
                 //Debug.Log("py:" + py);
+                
             }
         }
         MyTex.Apply();
@@ -89,6 +95,28 @@ public class ChangeTexturePixel : MonoBehaviour
             var posA= ScreenPoint2Pixel(Input.mousePosition);
             ChangePixelColorByCircle((int)posA.x, (int)posA.y, Radius, Col);
             //Debug.Log(Input.mousePosition);
+        }
+        //if (Input.GetMouseButtonDown(1))
+        //{
+        //    for (int i = 0; i < MyTex.height; i++)
+        //    {
+        //        for (int j = 0; j < MyTex.width; j++)
+        //        {
+        //            if (MyTex.GetPixel(j,i).r!=0)
+        //            {
+        //                Debug.Log("x:"+j+"  y:"+i);
+        //            }
+        //        }
+        //    }
+        //}
+
+        if (Input.GetMouseButtonDown(2))
+        {
+            for (int i = 0; i < MyTex.height; i++)
+            {
+                MyTex.SetPixel(MyTex.width-1, i, Col);
+            }
+            MyTex.Apply();
         }
     }
 }
