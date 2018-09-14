@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using System.Reflection.Emit;
+using UnityEngine;
+using UnityEngine.Profiling;
 using UnityEngine.UI;
 
 
@@ -8,6 +11,9 @@ public class ChangeTexturePixel : MonoBehaviour
     private Texture2D MyTex;
     public int Radius = 10;
     public Color Col = new Color(0, 0, 0, 0);
+    public Color Col2 =new Color(0,0,0,0);
+    private int[][] pixelArray;
+    private Dictionary<int,TexturePixel> texPixelDic=new Dictionary<int, TexturePixel>(); 
     void Awake()
     {
         mUITex = GetComponent<RawImage>();
@@ -19,6 +25,34 @@ public class ChangeTexturePixel : MonoBehaviour
         //MyTex.SetPixels(tex.GetPixels());
         MyTex.Apply();
         mUITex.texture = MyTex;
+
+        //---
+        int value = 0;
+        pixelArray=new int[MyTex.width][];
+        for (int i = 0; i < pixelArray.Length; i++)
+        {
+            pixelArray[i]=new int[MyTex.height];
+            for (int j = 0; j < MyTex.height; j++)
+            {
+                pixelArray[i][j] = value;
+
+                texPixelDic.Add(value,new TexturePixel(MyTex,i,j));
+                value++;
+            }
+        }
+        //Debug.Log(MyTex ==texPixelDic[pixelArray[10][10]].myTex);
+        Debug.Log(value);
+        for (int i = 0; i < 200; i++)
+        {
+            for (int j = 0; j < 100; j++)
+            {
+                value = pixelArray[i][j];
+                //Debug.Log(value);
+                texPixelDic[pixelArray[i][j]].Scratch(Col);
+                
+            }
+        }
+        MyTex.Apply();
     }
 
     void ChangePixelColorByCircle(int x, int y, int radius, Color col)
@@ -42,19 +76,92 @@ public class ChangeTexturePixel : MonoBehaviour
                 {
                     continue;
                 }
-               
+                Profiler.BeginSample("text1");
+                TexturePixel tp ;//= texPixelDic[pixelArray[MyTex.width - 1][py]];
+                
                 if (px==0)
                 {
-                   // px = MyTex.width - 1;
-                   MyTex.SetPixel(MyTex.width-1,py,Col);
+                    tp = texPixelDic[pixelArray[MyTex.width - 1][py]];
+                    // px = MyTex.width - 1;
+                    //MyTex.SetPixel(MyTex.width-1,py,Col);
+
+                    if (tp.GetScratchedTime()<1)
+                    {
+                        tp.Scratch(Col);
+                    }
+                    else
+                    {
+                        tp.Scratch(Col2);
+                    }
                 }
-                MyTex.SetPixel(px, py, Col);
-                //Debug.Log("px:"+px);
-                //Debug.Log("py:" + py);
+                //MyTex.SetPixel(px, py, Col);
+                tp = texPixelDic[pixelArray [px][py]];
+                if (tp.GetScratchedTime() < 1)
+                {
+                    tp.Scratch(Col);
+                }
+                else
+                {
+                    tp.Scratch(Col2);
+                }
+                Profiler.EndSample();
+            }
+        }
+        Profiler.BeginSample("text2");
+        MyTex.Apply();
+        Profiler.EndSample();
+        Profiler.BeginSample("text3");
+
+
+        int radiusBigger =(int)( Radius*2.0f);
+        for (int i = -radiusBigger; i < radiusBigger; i++)
+        {
+            var py = y + i;
+            if (py < 0 || py >= MyTex.height)
+            {
+                continue;
+            }
+
+            for (int j = -radiusBigger; j < radiusBigger; j++)
+            {
+                var px = x + j;
+                if (px < 0 || px >= MyTex.width)
+                {
+                    continue;
+                }
+                if (new Vector2(px - x, py - y).magnitude > radiusBigger)
+                {
+                    continue;
+                }
+               
+                TexturePixel tp;//= texPixelDic[pixelArray[MyTex.width - 1][py]];
+
+                if (px == 0)
+                {
+                    tp = texPixelDic[pixelArray[MyTex.width - 1][py]];
+                    // px = MyTex.width - 1;
+                    //MyTex.SetPixel(MyTex.width-1,py,Col);
+
+                    tp.SetScratchedTime();
+                }
+                //MyTex.SetPixel(px, py, Col);
+                tp = texPixelDic[pixelArray[px][py]];
+                tp.SetScratchedTime();
                 
             }
         }
-        MyTex.Apply();
+
+
+        //float iMax= MyTex.width;
+        //int jMax = MyTex.height;
+        //for (int i = 0; i < iMax; i++)
+        //{
+        //    for (int j = 0; j < jMax; j++)
+        //    {
+        //        texPixelDic[pixelArray[i][j]].SetScratchedTime();
+        //    }
+        //}
+        Profiler.EndSample();
     }
 
     int[] WorldPos2Pix(Vector3 worldPos)
